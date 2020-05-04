@@ -27,7 +27,6 @@ int height = 0;
 void init() {
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClearDepth(1.0);
-    glEnable(GL_DEPTH_TEST);
 
     shader = new Shader();
     programID = shader->init("shader_solar.vert",
@@ -62,16 +61,17 @@ void init() {
 
 float angle = 0.0;
 static glm::vec4 color_inc =  glm::vec4(0.0, 0.0, 0.0, 0.0);
+static bool color_flag = true;
 
 void drawScene() {
+    glEnable(GL_DEPTH_TEST);
+
     glm::vec4 color;
     angle += 1.0;
     if( angle >= 360.0) angle = 0.0;
 
-    glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0, 0.0, 1.0),  //pos
-                                       glm::vec3(0.0, 0.0, 0.0),  //looking at
-                                       glm::vec3(0.0, 1.0, 0.0)); //up vector
-    viewMatrix = glm::mat4(1.0);
+
+    glm::mat4  viewMatrix = glm::mat4(1.0);
     glUniformMatrix4fv(viewMatrixLocation, 1, false, &viewMatrix[0][0]);
 
 
@@ -91,14 +91,18 @@ void drawScene() {
     //draw instanced cube stars
     mCube->drawCubeVBO(1, color);
 
+    viewMatrix = glm::lookAt(glm::vec3(0.0, 0.0, 1.0),  //pos
+                                       glm::vec3(0.0, 0.0, 0.0),  //looking at
+                                       glm::vec3(0.0, 1.0, 0.0)); //up vector
+     glUniformMatrix4fv(viewMatrixLocation, 1, false, &viewMatrix[0][0]);
 
     modelMatrix = glm::mat4(1.0);
 
     modelMatrix =
-            glm::translate(glm::vec3(0, 0.0, -1.0));
+            glm::translate(glm::vec3(0, 0.0, -9.0));
     modelMatrix = glm::rotate(modelMatrix, glm::radians(angle),
                               glm::vec3(0.0, 1.0, 0.0));
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(20.0, 20.0, 20.0));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(200.0, 200.0, 200.0));
 
     glUniformMatrix4fv(modelMatrixLocation,
                        1,
@@ -108,12 +112,13 @@ void drawScene() {
     //draw the sun
     color = glm::vec4(1.0, 1.0, 0.0, 1.0)+ color_inc;
     mCube->drawCubeVBO(0, color);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1/200.0, 1/200.0, 1/200.0));
 
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(2.0, 0.0, 0.0));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(5.5, 0.0, 0.0));
     modelMatrix = glm::rotate(modelMatrix,
                               glm::radians(angle+30), glm::vec3(0.0, 1.0, 0.0));
 
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(15.5, 15.5, 15.5));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(80.0, 80.0, 80.0));
     glUniformMatrix4fv(modelMatrixLocation,
                        1,
                        false,
@@ -122,11 +127,12 @@ void drawScene() {
     //draw the earth
     color = glm::vec4(0.0, 1.0, 0.0, 1.0) + color_inc;
     mCube->drawCubeVBO(0, color);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1/80.0, 1/80.0, 1/80.0));
 
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(-1.0, 0.0, 0.0));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(2.0, 0.0, 0.0));
     modelMatrix = glm::rotate(modelMatrix,
-                              glm::radians(angle+100), glm::vec3(0.0, 1.0, 0.0));
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(5.5, 5.5, 5.5));
+                              glm::radians(angle+150), glm::vec3(0.0, 1.0, 0.0));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(30.0, 30.0, 30.0));
     glUniformMatrix4fv(modelMatrixLocation,
                        1,
                        false,
@@ -138,8 +144,23 @@ void drawScene() {
     mCube->drawCubeVBO(0, color);
 
 
-    //make color to black eventually
-    color_inc -= glm::vec4(0.005, 0.005, 0.005, 0.005);
+    //make color go to black and back to original continuously
+    if(color_flag)
+    {
+        color_inc -= glm::vec4(0.005, 0.005, 0.005, 0.005);
+        if(color_inc.x < -1.0)
+        {
+            color_flag = false;
+        }
+    }
+    if(!color_flag)
+    {
+        color_inc += glm::vec4(0.005, 0.005, 0.005, 0.005);
+        if(color_inc.x > 0.0)
+        {
+            color_flag = true;
+        }
+    }
 
 }
 
